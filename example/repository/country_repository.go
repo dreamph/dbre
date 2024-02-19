@@ -3,7 +3,11 @@ package repository
 import (
 	"context"
 
+	"github.com/dreamph/dbre"
+	"github.com/dreamph/dbre/example/domain"
+	"github.com/dreamph/dbre/example/domain/repomodels"
 	"github.com/dreamph/dbre/query"
+	"github.com/dreamph/dbre/query/bun"
 )
 
 type CountryRepository interface {
@@ -26,6 +30,7 @@ type countryRepository struct {
 func NewCountryRepository(db *query.AppIDB) CountryRepository {
 	return &countryRepository{
 		query: bun.New[domain.Country](db),
+		//query: gorm.New[domain.Country](db),
 	}
 }
 
@@ -71,21 +76,16 @@ func (r *countryRepository) List(ctx context.Context, obj *repomodels.CountryLis
 		return nil, 0, err
 	}
 	if total > 0 {
-		sortSQL, err := database.SortSQL(&database.SortParam{
+		sortSQL, err := dbre.SortSQL(&dbre.SortParam{
 			SortFieldMapping: map[string]string{
 				"id":     "id",
 				"nameEn": "name_en",
 				"nameTh": "name_th",
 				"code":   "code",
 				"status": "status",
-				//"state":             "state",
-				//"createBy":   "create_by",
-				//"createDate": "create_date",
-				//"updateBy":   "update_by",
-				//"updateDate": "update_date",
 			},
 			Sort: obj.Sort,
-			DefaultSort: &models.Sort{
+			DefaultSort: &dbre.Sort{
 				SortBy:        "nameEn",
 				SortDirection: "DESC",
 			},
@@ -94,7 +94,7 @@ func (r *countryRepository) List(ctx context.Context, obj *repomodels.CountryLis
 			return nil, 0, err
 		}
 
-		result, err = r.query.ListWhere(ctx, whereCauses, utils.ToQueryLimit(obj.Limit), []string{sortSQL})
+		result, err = r.query.ListWhere(ctx, whereCauses, dbre.ToQueryLimit(obj.Limit), []string{sortSQL})
 		if err != nil {
 			return nil, 0, err
 		}

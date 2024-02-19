@@ -11,10 +11,9 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
-	"github.com/uptrace/bun/extra/bundebug"
-	"github.com/uptrace/bun/extra/bunotel"
-
 	"fmt"
+
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
 type Options struct {
@@ -25,7 +24,6 @@ type Options struct {
 	Password       string
 	ConnectTimeout int64
 	PoolOptions    *dbre.DbPoolOptions
-	TraceEnable    bool
 	Timezone       string
 }
 
@@ -44,10 +42,6 @@ func Connect(options *Options) (*bun.DB, error) {
 	}
 
 	bunDB := bun.NewDB(db, pgdialect.New(), bun.WithDiscardUnknownColumns())
-	if options.TraceEnable {
-		bunDB.AddQueryHook(bunotel.NewQueryHook(bunotel.WithDBName(options.DBName)))
-	}
-
 	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	return bunDB, nil
@@ -59,14 +53,14 @@ func Close(db *bun.DB) {
 	}
 }
 
-func openSQLDB(usePgxPool bool, connection string, timezone string, poolOptions *database.DbPoolOptions) (*sql.DB, error) {
+func openSQLDB(usePgxPool bool, connection string, timezone string, poolOptions *dbre.DbPoolOptions) (*sql.DB, error) {
 	if usePgxPool {
 		return openDBFromPool(connection, timezone, poolOptions)
 	}
 	return openDB(connection, timezone, poolOptions)
 }
 
-func openDB(connection string, timezone string, poolOptions *database.DbPoolOptions) (*sql.DB, error) {
+func openDB(connection string, timezone string, poolOptions *dbre.DbPoolOptions) (*sql.DB, error) {
 	config, err := pgx.ParseConfig(connection)
 	if err != nil {
 		return nil, err

@@ -3,6 +3,9 @@ package dbre
 import (
 	"database/sql"
 	"time"
+
+	"github.com/dreamph/dbre/example/core/models"
+	"github.com/dreamph/dbre/query"
 )
 
 type DbPoolOptions struct {
@@ -24,4 +27,14 @@ func SetConnectionsPool(db *sql.DB, pool *DbPoolOptions) {
 	db.SetMaxIdleConns(pool.MaxIdleConns)
 	db.SetMaxOpenConns(pool.MaxOpenConns)
 	db.SetConnMaxLifetime(pool.ConnMaxLifetime)
+}
+
+func ToQueryLimit(pageLimit *models.PageLimit) *query.Limit {
+	if pageLimit == nil {
+		return nil
+	}
+	limit := &query.Limit{}
+	limit.PageSize = pageLimit.PageSize
+	limit.Offset = (pageLimit.PageNumber - 1) * pageLimit.PageSize
+	return limit
 }
