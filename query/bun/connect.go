@@ -1,19 +1,22 @@
-package main
+package bun
 
 import (
 	"context"
 	"database/sql"
 
 	"github.com/dreamph/dbre"
+	"github.com/dreamph/dbre/query/bun/queryhook/bunzap"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/zap"
+
+	//"github.com/uptrace/bun/extra/bundebug"
+	"github.com/uptrace/bun/extra/bunotel"
 
 	"fmt"
-
-	"github.com/uptrace/bun/extra/bundebug"
 )
 
 type Options struct {
@@ -23,7 +26,9 @@ type Options struct {
 	User           string
 	Password       string
 	ConnectTimeout int64
+	Logger         *zap.Logger
 	PoolOptions    *dbre.DbPoolOptions
+	TraceEnable    bool
 	Timezone       string
 }
 
@@ -42,7 +47,14 @@ func Connect(options *Options) (*bun.DB, error) {
 	}
 
 	bunDB := bun.NewDB(db, pgdialect.New(), bun.WithDiscardUnknownColumns())
-	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	if options.TraceEnable {
+		bunDB.AddQueryHook(bunotel.NewQueryHook(bunotel.WithDBName(options.DBName)))
+	}
+
+	//bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	bunDB.AddQueryHook(bunzap.NewQueryHook(bunzap.QueryHookOptions{
+		Logger: options.Logger,
+	}))
 
 	return bunDB, nil
 }

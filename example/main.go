@@ -8,21 +8,28 @@ import (
 	"github.com/dreamph/dbre/example/repository"
 	"github.com/dreamph/dbre/query"
 	"github.com/dreamph/dbre/query/bun"
+	"go.uber.org/zap"
 )
 
 func main() {
-	bunDB, err := Connect(&Options{
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	bunDB, err := bun.Connect(&bun.Options{
 		Host:           "127.0.0.1",
 		Port:           "5432",
 		DBName:         "DB1",
 		User:           "user1",
 		Password:       "password",
 		ConnectTimeout: 2000,
+		Logger:         logger,
 	})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	defer bunDB.Close()
+	defer bun.Close(bunDB)
 
 	appDB := &query.AppIDB{BunDB: bunDB}
 	dbTx := bun.NewDBTx(bunDB)
