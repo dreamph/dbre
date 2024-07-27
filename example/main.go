@@ -52,10 +52,18 @@ func main() {
 			ID:     "1",
 			NameEn: "",
 		})
+		if err != nil {
+			return err
+		}
+
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
 			ID:     "2",
 			NameEn: "",
 		})
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {

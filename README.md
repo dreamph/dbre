@@ -1,6 +1,8 @@
 ## Basic Usage
 Full Example [example](example)
 
+Full Example with Clean Architecture 
+[example](https://github.com/dreamph/go-clean-architecture-template/blob/main/internal/modules/company/usecase/company_example_db_transaction_usecase.go)
 # Domain gen by https://github.com/smallnest/gen
 ```go
 package domain
@@ -224,10 +226,18 @@ func main() {
 			ID:     "1",
 			NameEn: "",
 		})
+		if err != nil {
+			return err
+		}
+		
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
 			ID:     "2",
 			NameEn: "",
 		})
+		if err != nil {
+			return err
+		}
+		
 		return nil
 	})
 	if err != nil {
@@ -235,4 +245,4 @@ func main() {
 	}
 }
 
-```# dbre
+```
