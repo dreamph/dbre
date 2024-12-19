@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -39,11 +40,6 @@ func NewNamedParameterQuery(queryText string, params []interface{}) *NamedParame
 	ret.parse(params)
 
 	return ret
-}
-
-func IsSlice(value interface{}) bool {
-	typeOf := reflect.TypeOf(value)
-	return typeOf.Kind() == reflect.Slice
 }
 
 func (n *NamedParameterQuery) parse(params []interface{}) {
@@ -148,15 +144,35 @@ func (n *NamedParameterQuery) GetParsedParameters() []interface{} {
 func BuildWhereCause(objPtr interface{}) *[]query.WhereCause {
 	where := query.NewWhereBuilder().Where("1 = 1")
 
-	elem := reflect.ValueOf(objPtr).Elem()
-	for i := 0; i < elem.NumField(); i++ {
-		if !elem.Field(i).IsZero() {
-			varName := elem.Type().Field(i).Name
-			varValue := elem.Field(i).Interface()
-			where.Where(strcase.ToSnake(varName)+" = ?", varValue)
-			//fmt.Printf("%v %v\n", varName, varValue)
+	objElem := reflect.ValueOf(objPtr).Elem()
+	objType := reflect.TypeOf(objPtr).Elem()
+	for i := 0; i < objElem.NumField(); i++ {
+		if !objElem.Field(i).IsZero() {
+			varValue := objElem.Field(i).Interface()
+
+			bunTag := objType.Field(i).Tag.Get("bun")
+			list := strings.Split(bunTag, ",")
+			dbName := GetArrayValueByIndex(list, 0)
+			if dbName != "" {
+				where.Where(dbName+" = ?", varValue)
+			} else {
+				dbName = objElem.Type().Field(i).Name
+				where.Where(strcase.ToSnake(dbName)+" = ?", varValue)
+			}
 		}
 	}
 
 	return where.WhereCauses()
+}
+
+func GetArrayValueByIndex(list []string, index int) string {
+	if len(list) < index {
+		return ""
+	}
+	return list[index]
+}
+
+func IsSlice(value interface{}) bool {
+	typeOf := reflect.TypeOf(value)
+	return typeOf.Kind() == reflect.Slice
 }
