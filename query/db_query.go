@@ -2,9 +2,6 @@ package query
 
 import (
 	"context"
-
-	"github.com/uptrace/bun"
-	"gorm.io/gorm"
 )
 
 type DB[T any] interface {
@@ -29,11 +26,14 @@ type DB[T any] interface {
 	CountWhere(ctx context.Context, whereCauses *[]WhereCause) (int64, error)
 }
 
-type TxFn func(ctx context.Context, appDB *AppIDB) error
+type TxFn func(ctx context.Context, appDB AppIDB) error
 
-type AppIDB struct {
-	BunDB  bun.IDB
-	GormDB *gorm.DB
+type AppIDB interface {
+	GetDB() any
+}
+
+func GetDB[T any](appDB AppIDB) T {
+	return appDB.GetDB().(T)
 }
 
 type DBTx interface {
