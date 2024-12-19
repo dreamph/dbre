@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"github.com/dreamph/dbre"
-	"github.com/dreamph/dbre/query/gorm/otel"
 	errs "github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
@@ -24,7 +23,7 @@ type Options struct {
 	ConnectTimeout int64
 	Logger         *zap.Logger
 	PoolOptions    *dbre.DbPoolOptions
-	TraceEnable    bool
+	Plugins        []gorm.Plugin
 }
 
 // Connect ...
@@ -61,10 +60,12 @@ func Connect(options *Options) (*gorm.DB, error) {
 
 	appLogger.Info("DB connect successfully..")
 
-	if options.TraceEnable {
-		err := db.Use(otel.New())
-		if err != nil {
-			return nil, err
+	if options.Plugins != nil {
+		for _, plugin := range options.Plugins {
+			err := db.Use(plugin)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
