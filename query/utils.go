@@ -10,19 +10,6 @@ type Limit struct {
 	PageSize int64 `json:"pageSize"`
 }
 
-func NewLimit(pageSize int64, offset int64) *Limit {
-	return &Limit{PageSize: pageSize, Offset: offset}
-}
-
-type Sort struct {
-	SortBy        string `json:"sortBy"`
-	SortDirection string `json:"sortDirection" example:"DESC" enums:"ASC,DESC"`
-}
-
-func NewSort(sortBy string, sortDirection string) *Sort {
-	return &Sort{SortBy: sortBy, SortDirection: sortDirection}
-}
-
 type WhereCause struct {
 	Type  int
 	Query string
