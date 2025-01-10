@@ -194,20 +194,17 @@ import (
 
 	"github.com/dreamph/dbre"
 	"github.com/dreamph/dbre/adapters/bun"
-	"github.com/dreamph/dbre/adapters/bun/connectors/pg"
+	bunpg "github.com/dreamph/dbre/adapters/bun/connectors/pg"
+	"github.com/dreamph/dbre/adapters/gorm"
+	gormpg "github.com/dreamph/dbre/adapters/gorm/connectors/pg"
 
 	"github.com/dreamph/dbre/example/domain"
 	"github.com/dreamph/dbre/example/repository"
 	"go.uber.org/zap"
 )
 
-func main() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	bunDB, err := pg.Connect(&pg.Options{
+func getBunDB(logger *zap.Logger) (dbre.AppIDB, dbre.DBTx, error) {
+	bunDB, err := bunpg.Connect(&bunpg.Options{
 		Host:           "127.0.0.1",
 		Port:           "5432",
 		DBName:         "DB1",
@@ -217,12 +214,51 @@ func main() {
 		Logger:         logger,
 	})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return nil, nil, err
 	}
-	defer pg.Close(bunDB)
 
 	appDB := bun.NewIDB(bunDB)
 	dbTx := bun.NewDBTx(bunDB)
+
+	return appDB, dbTx, nil
+}
+
+func getGormDB(logger *zap.Logger) (dbre.AppIDB, dbre.DBTx, error) {
+	bunDB, err := gormpg.Connect(&gormpg.Options{
+		Host:           "127.0.0.1",
+		Port:           "5432",
+		DBName:         "DB1",
+		User:           "user1",
+		Password:       "password",
+		ConnectTimeout: 2000,
+		Logger:         logger,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	appDB := gorm.NewIDB(bunDB)
+	dbTx := gorm.NewDBTx(bunDB)
+
+	return appDB, dbTx, nil
+}
+
+func main() {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	appDB, dbTx, err := getBunDB(logger) // or getGormDB(logger) for GORM
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	defer func() {
+		err := appDB.Close()
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -233,7 +269,7 @@ func main() {
 		NameEn: "NameEn1",
 	})
 	if err != nil {
-		return
+		log.Fatalf(err.Error())
 	}
 
 	// Simple Usage with Repository
@@ -271,6 +307,7 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 }
+
 
 
 ```
