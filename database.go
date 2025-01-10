@@ -15,9 +15,9 @@ type DbPoolOptions struct {
 }
 
 var DbPoolDefault = &DbPoolOptions{
-	MaxIdleConns:    20,
-	MaxOpenConns:    100,
-	ConnMaxLifetime: 30 * time.Minute,
+	MaxIdleConns:    5,
+	MaxOpenConns:    10,
+	ConnMaxLifetime: 10 * time.Minute,
 }
 
 func SetConnectionsPool(db *sql.DB, pool *DbPoolOptions) {

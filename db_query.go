@@ -1,10 +1,11 @@
-package query
+package dbre
 
 import (
 	"context"
 )
 
 type DB[T any] interface {
+	WithTx(tx AppIDB) DB[T]
 	RawExec(ctx context.Context, sqlQuery string, params []interface{}) (int64, error)
 	RawQuery(ctx context.Context, sql string, params []interface{}, resultPtr interface{}) error
 	Create(ctx context.Context, obj *T) (*T, error)
@@ -30,6 +31,7 @@ type TxFn func(ctx context.Context, appDB AppIDB) error
 
 type AppIDB interface {
 	GetDB() any
+	Close() error
 }
 
 func GetDB[T any](appDB AppIDB) T {

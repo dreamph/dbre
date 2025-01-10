@@ -1,4 +1,4 @@
-package query
+package dbre
 
 const (
 	Or  = 2
@@ -16,15 +16,15 @@ type WhereCause struct {
 	Args  []interface{}
 }
 
-type whereBuilder struct {
+type WhereBuilder struct {
 	whereCauses []WhereCause
 }
 
-func NewWhereBuilder() *whereBuilder {
-	return &whereBuilder{}
+func NewWhereBuilder() *WhereBuilder {
+	return &WhereBuilder{}
 }
 
-func (w *whereBuilder) Where(query string, args ...interface{}) *whereBuilder {
+func (w *WhereBuilder) Where(query string, args ...interface{}) *WhereBuilder {
 	w.whereCauses = append(w.whereCauses, WhereCause{
 		Type:  And,
 		Query: query,
@@ -33,7 +33,7 @@ func (w *whereBuilder) Where(query string, args ...interface{}) *whereBuilder {
 	return w
 }
 
-func (w *whereBuilder) WhereOr(query string, args ...interface{}) *whereBuilder {
+func (w *WhereBuilder) WhereOr(query string, args ...interface{}) *WhereBuilder {
 	w.whereCauses = append(w.whereCauses, WhereCause{
 		Type:  Or,
 		Query: query,
@@ -42,6 +42,6 @@ func (w *whereBuilder) WhereOr(query string, args ...interface{}) *whereBuilder 
 	return w
 }
 
-func (w *whereBuilder) WhereCauses() *[]WhereCause {
+func (w *WhereBuilder) WhereCauses() *[]WhereCause {
 	return &w.whereCauses
 }
