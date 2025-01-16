@@ -3,7 +3,7 @@ Full Example [example](example)
 
 Full Example with Clean Architecture
 [example](https://github.com/dreamph/go-clean-architecture-template)
-# Domain gen by https://github.com/smallnest/gen
+
 ```go
 package main
 

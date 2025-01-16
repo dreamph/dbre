@@ -1,7 +1,8 @@
 ## Basic Usage
 Full Example with Clean Architecture
 [example](https://github.com/dreamph/go-clean-architecture-template)
-# Domain gen by https://github.com/smallnest/gen
+
+Domain generate by [smallnest/gen](https://github.com/smallnest/gen)
 ```go
 package domain
 
