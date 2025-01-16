@@ -19,41 +19,20 @@ var (
 	_ = null.Bool{}
 )
 
-// Country struct is a row record of the country table in the sodaudev database
 type Country struct {
 	bun.BaseModel `bun:"table:country,alias:c" json:"-" swaggerignore:"true"`
-	//[ 0] id                                             VARCHAR(45)          null: false  primary: true   isArray: false  auto: false  col: VARCHAR         len: 45      default: []
-	ID string `bun:"id,pk" gorm:"primary_key;column:id;type:VARCHAR;size:45;" json:"id"`
-	//[ 1] mobile_country_code                                     VARCHAR(20)          null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: 20      default: []
-	MobileCountryCode string `gorm:"column:mobile_country_code;type:VARCHAR;size:20;" json:"mobileCountryCode"`
-	//[ 2] code                                           VARCHAR(20)          null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: 20      default: []
-	Code string `gorm:"column:code;type:VARCHAR;size:20;" json:"code"`
-	//[ 3] name_th                                        VARCHAR(100)         null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: 100     default: []
-	NameTh string `gorm:"column:name_th;type:VARCHAR;size:100;" json:"nameTh"`
-	//[ 4] name_en                                        VARCHAR(100)         null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: 100     default: []
-	NameEn string `gorm:"column:name_en;type:VARCHAR;size:100;" json:"nameEn"`
-	//[ 5] iso2_code                                         VARCHAR(5)           null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 5       default: []
-	Iso2Code null.String `gorm:"column:iso2_code;type:VARCHAR;size:5;" json:"iso2"`
-	//[ 6] iso3_code                                          VARCHAR(5)           null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 5       default: []
-	Iso3Code null.String `gorm:"column:iso3_code;type:VARCHAR;size:5;" json:"iso3"`
-	//[ 7] iso_numeric3_code                                  VARCHAR(5)           null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 5       default: []
-	IsoNumeric3Code null.String ` gorm:"column:iso_numeric3_code;type:VARCHAR;size:5;" json:"isoNumeric3"`
-	//[ 8] nationality_code                               VARCHAR(5)           null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 5       default: []
-	NationalityCode null.String `gorm:"column:nationality_code;type:VARCHAR;size:5;" json:"nationalityCode"`
-	//[ 9] nationality_name_en                            VARCHAR(100)         null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 100     default: []
-	NationalityNameEn null.String `gorm:"column:nationality_name_en;type:VARCHAR;size:100;" json:"nationalityNameEn"`
-	//[10] nationality_name_short_en                      VARCHAR(100)         null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 100     default: []
-	NationalityNameShortEn null.String `gorm:"column:nationality_name_short_en;type:VARCHAR;size:100;" json:"nationalityNameShortEn"`
-	//[11] name_short_en                                  VARCHAR(100)         null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 100     default: []
-	NameShortEn null.String `gorm:"column:name_short_en;type:VARCHAR;size:100;" json:"nameShortEn"`
-	//[12] reporting_currency                             VARCHAR(20)          null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 20      default: []
-	ReportingCurrency null.String `gorm:"column:reporting_currency;type:VARCHAR;size:20;" json:"reportingCurrency"`
-	//[13] currency_symbol                                VARCHAR(45)          null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: 45      default: []
-	CurrencySymbol null.String `gorm:"column:currency_symbol;type:VARCHAR;size:45;" json:"currencySymbol"`
-	//[14] status                                         INT4                 null: false  primary: false  isArray: false  auto: false  col: INT4            len: -1      default: []
+	// [ 0] id                                             VARCHAR              null: false  primary: true   isArray: false  auto: false  col: VARCHAR         len: -1      default: []
+	Id string `bun:"id,pk" gorm:"primary_key;column:id;type:VARCHAR;" json:"id"`
+	// [ 1] code                                           VARCHAR              null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: -1      default: []
+	Code string `gorm:"column:code;type:VARCHAR;" json:"code"`
+	// [ 2] name                                           VARCHAR              null: false  primary: false  isArray: false  auto: false  col: VARCHAR         len: -1      default: []
+	Name string `gorm:"column:name;type:VARCHAR;" json:"name"`
+	// [ 3] status                                         INT4                 null: false  primary: false  isArray: false  auto: false  col: INT4            len: -1      default: []
 	Status int32 `gorm:"column:status;type:INT4;" json:"status"`
-	//[15] seq                                            INT4                 null: true   primary: false  isArray: false  auto: false  col: INT4            len: -1      default: []
-	Seq null.Int `gorm:"column:seq;type:INT4;" json:"seq"`
+	// [ 4] description                                    VARCHAR              null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: -1      default: []
+	Description null.String `gorm:"column:description;type:VARCHAR;" json:"description" swaggertype:"string"`
+	// [ 5] other_field                                    VARCHAR              null: true   primary: false  isArray: false  auto: false  col: VARCHAR         len: -1      default: []
+	OtherField null.String `gorm:"column:other_field;type:VARCHAR;" json:"otherField" swaggertype:"string"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -92,6 +71,7 @@ type CountryRepository interface {
 
 	Create(ctx context.Context, obj *domain.Country) (*domain.Country, error)
 	Update(ctx context.Context, obj *domain.Country) (*domain.Country, error)
+	Upsert(ctx context.Context, obj *domain.Country, specifyUpdateFields []string) (*domain.Country, error)
 	UpdateForce(ctx context.Context, obj *domain.Country) (*domain.Country, error)
 	Delete(ctx context.Context, id string) error
 	FindByID(ctx context.Context, id string) (*domain.Country, error)
@@ -122,16 +102,20 @@ func (r *countryRepository) Update(ctx context.Context, obj *domain.Country) (*d
 	return r.query.Update(ctx, obj)
 }
 
+func (r *countryRepository) Upsert(ctx context.Context, obj *domain.Country, specifyUpdateFields []string) (*domain.Country, error) {
+	return r.query.Upsert(ctx, obj, specifyUpdateFields)
+}
+
 func (r *countryRepository) UpdateForce(ctx context.Context, obj *domain.Country) (*domain.Country, error) {
 	return r.query.UpdateForce(ctx, obj)
 }
 
 func (r *countryRepository) Delete(ctx context.Context, id string) error {
-	return r.query.Delete(ctx, &domain.Country{ID: id})
+	return r.query.Delete(ctx, &domain.Country{Id: id})
 }
 
 func (r *countryRepository) FindByID(ctx context.Context, id string) (*domain.Country, error) {
-	return r.query.FindByPK(ctx, &domain.Country{ID: id})
+	return r.query.FindByPK(ctx, &domain.Country{Id: id})
 }
 
 func (r *countryRepository) FindOne(ctx context.Context, obj *domain.Country) (*domain.Country, error) {
@@ -155,14 +139,13 @@ func (r *countryRepository) List(ctx context.Context, obj *repomodels.CountryLis
 		sortSQL, err := dbre.SortSQL(&dbre.SortParam{
 			SortFieldMapping: map[string]string{
 				"id":     "id",
-				"nameEn": "name_en",
-				"nameTh": "name_th",
 				"code":   "code",
+				"name":   "name",
 				"status": "status",
 			},
 			Sort: obj.Sort,
 			DefaultSort: &dbre.Sort{
-				SortBy:        "nameEn",
+				SortBy:        "name",
 				SortDirection: dbre.DESC,
 			},
 		})
@@ -178,6 +161,7 @@ func (r *countryRepository) List(ctx context.Context, obj *repomodels.CountryLis
 
 	return result, total, nil
 }
+
 
 
 
@@ -197,6 +181,8 @@ import (
 	bunpg "github.com/dreamph/dbre/adapters/bun/connectors/pg"
 	"github.com/dreamph/dbre/adapters/gorm"
 	gormpg "github.com/dreamph/dbre/adapters/gorm/connectors/pg"
+	"github.com/dreamph/dbre/example/core/models"
+	"github.com/dreamph/dbre/example/domain/repomodels"
 
 	"github.com/dreamph/dbre/example/domain"
 	"github.com/dreamph/dbre/example/repository"
@@ -207,8 +193,8 @@ func getBunDB(logger *zap.Logger) (dbre.AppIDB, dbre.DBTx, error) {
 	bunDB, err := bunpg.Connect(&bunpg.Options{
 		Host:           "127.0.0.1",
 		Port:           "5432",
-		DBName:         "DB1",
-		User:           "user1",
+		DBName:         "dream",
+		User:           "dream",
 		Password:       "password",
 		ConnectTimeout: 2000,
 		Logger:         logger,
@@ -227,8 +213,8 @@ func getGormDB(logger *zap.Logger) (dbre.AppIDB, dbre.DBTx, error) {
 	bunDB, err := gormpg.Connect(&gormpg.Options{
 		Host:           "127.0.0.1",
 		Port:           "5432",
-		DBName:         "DB1",
-		User:           "user1",
+		DBName:         "dream",
+		User:           "dream",
 		Password:       "password",
 		ConnectTimeout: 2000,
 		Logger:         logger,
@@ -244,12 +230,14 @@ func getGormDB(logger *zap.Logger) (dbre.AppIDB, dbre.DBTx, error) {
 }
 
 func main() {
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	defer logger.Sync()
 
-	appDB, dbTx, err := getBunDB(logger) // or getGormDB(logger) for GORM
+	appDB, dbTx, err := getBunDB(logger)
+	//appDB, dbTx, err := getGormDB(logger)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -265,8 +253,10 @@ func main() {
 	//Simple Usage
 	countryDbQuery := bun.New[domain.Country](appDB)
 	_, err = countryDbQuery.Create(ctx, &domain.Country{
-		ID:     "1",
-		NameEn: "NameEn1",
+		Id:     "1",
+		Code:   "C1",
+		Name:   "Name",
+		Status: 20,
 	})
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -276,8 +266,20 @@ func main() {
 	countryRepository := repository.NewCountryRepository(appDB)
 
 	_, err = countryRepository.Create(ctx, &domain.Country{
-		ID:     "1",
-		NameEn: "NameEn1",
+		Id:     "12",
+		Code:   "C12",
+		Name:   "Name",
+		Status: 20,
+	})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	_, _, err = countryRepository.List(ctx, &repomodels.CountryListCriteria{
+		Limit: &models.PageLimit{
+			PageNumber: 1,
+			PageSize:   20,
+		},
 	})
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -286,16 +288,20 @@ func main() {
 	// With Transaction
 	err = dbTx.WithTx(ctx, func(ctx context.Context, appDB dbre.AppIDB) error {
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			ID:     "1",
-			NameEn: "NameEn1",
+			Id:     "13",
+			Code:   "C13",
+			Name:   "Name",
+			Status: 20,
 		})
 		if err != nil {
 			return err
 		}
 
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			ID:     "2",
-			NameEn: "NameEn2",
+			Id:     "21",
+			Code:   "C31",
+			Name:   "Name",
+			Status: 20,
 		})
 		if err != nil {
 			return err
@@ -307,7 +313,5 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 }
-
-
 
 ```
