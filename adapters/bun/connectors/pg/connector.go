@@ -5,15 +5,15 @@ import (
 	"database/sql"
 
 	"github.com/dreamph/dbre"
-	"github.com/dreamph/dbre/adapters/bun/queryhook/bunzap"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"go.uber.org/zap"
 
+	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/extra/bunotel"
+	"go.uber.org/zap"
 
 	"fmt"
 )
@@ -50,19 +50,13 @@ func Connect(options *Options) (*bun.DB, error) {
 		bunDB.AddQueryHook(bunotel.NewQueryHook(bunotel.WithDBName(options.DBName)))
 	}
 
-	//bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-	bunDB.AddQueryHook(bunzap.NewQueryHook(bunzap.QueryHookOptions{
+	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	/*	bunDB.AddQueryHook(bunzap.NewQueryHook(bunzap.QueryHookOptions{
 		Logger: options.Logger,
-	}))
+	}))*/
 
 	return bunDB, nil
 }
-
-/*func Close(db *bun.DB) {
-	if db != nil {
-		_ = db.Close()
-	}
-}*/
 
 func openSQLDB(usePgxPool bool, connection string, timezone string, poolOptions *dbre.DbPoolOptions) (*sql.DB, error) {
 	if usePgxPool {

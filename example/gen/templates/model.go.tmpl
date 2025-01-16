@@ -1,0 +1,75 @@
+package {{.modelPackageName}}
+
+import (
+    "time"
+    "github.com/guregu/null"
+    "github.com/uptrace/bun"
+)
+
+var (
+	_ = time.Second
+	_ = null.Bool{}
+)
+
+/*
+DB Table Details
+-------------------------------------
+{{ $ddl := .TableInfo.DBMeta.DDL }}
+{{if $ddl }}
+{{$ddl}}
+{{- end}}
+
+JSON Sample
+-------------------------------------
+{{ToJSON .TableInfo.Instance 4}}
+
+{{if .TableInfo.Notes }}
+Comments
+-------------------------------------
+{{ .TableInfo.Notes}}
+{{end}}
+
+*/
+ 
+{{if not .Config.AddProtobufAnnotation }}
+
+// {{.StructName}} struct is a row record of the {{.TableName}} table in the {{.DatabaseName}} database
+type {{.StructName}} struct {
+    bun.BaseModel `bun:"table:{{.TableName}},alias:{{.ShortStructName}}" json:"-" swaggerignore:"true"`
+    {{range .TableInfo.CodeFields -}}
+        {{- $swaggerTypeAnnotaion := "" -}}
+        {{- $formatAnnotaion := "" -}}
+        {{- if or (eq .GoFieldType "null.Int") (eq .GoFieldType "null.Float") -}}
+            {{- $swaggerTypeAnnotaion = ` swaggertype:"number"` -}}
+        {{- else if or (eq .GoFieldType "null.Time") (eq .GoFieldType "null.String") -}}
+            {{- $swaggerTypeAnnotaion = ` swaggertype:"string"` -}}
+        {{- end -}}
+        {{- if or (eq .GoFieldType "null.Time") (eq .GoFieldType "time.Time") -}}
+            {{- $formatAnnotaion = ` format:"date-time"` -}}
+        {{- end -}}
+    // {{ .Comment -}}
+    {{if .ColumnMeta.IsPrimaryKey }}
+    {{ replace .GoFieldName "ID" "Id" }} {{.GoFieldType}} `bun:"{{ toSnakeCase .GoFieldName }},pk" {{.GormAnnotation}} {{.JSONAnnotation}}{{$swaggerTypeAnnotaion}}{{$formatAnnotaion}}`
+    {{else}}
+    {{ replace .GoFieldName "ID" "Id" }} {{.GoFieldType}} `{{.GormAnnotation}} {{.JSONAnnotation}}{{$swaggerTypeAnnotaion}}{{$formatAnnotaion}}`
+    {{end}}
+    {{- end}}
+}
+
+{{else}}
+
+
+// {{.StructName}} struct is a row record of the {{.TableName}} table in the {{.DatabaseName}} database
+/*
+type {{.StructName}} struct {
+    {{range .TableInfo.Fields}}{{.}}
+    {{end}}
+}
+*/
+
+{{end}}
+
+// TableName sets the insert table name for this struct type
+func ({{.ShortStructName}} *{{.StructName}}) TableName() string {
+	return "{{.TableName}}"
+}

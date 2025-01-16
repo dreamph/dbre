@@ -12,6 +12,8 @@ type DB[T any] interface {
 	CreateList(ctx context.Context, obj *[]T) (*[]T, error)
 	Update(ctx context.Context, obj *T) (*T, error)
 	UpdateList(ctx context.Context, obj *[]T) (*[]T, error)
+	Upsert(ctx context.Context, obj *T, specifyUpdateFields []string) (*T, error)
+	UpsertList(ctx context.Context, obj *[]T, specifyUpdateFields []string) (*[]T, error)
 	UpdateForce(ctx context.Context, obj *T) (*T, error)
 	FindByPK(ctx context.Context, obj *T) (*T, error)
 	Delete(ctx context.Context, obj *T) error

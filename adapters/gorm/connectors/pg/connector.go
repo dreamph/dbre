@@ -37,6 +37,7 @@ func Connect(options *Options) (*gorm.DB, error) {
 		options.Password,
 		options.ConnectTimeout,
 	)
+
 	dbLogger := NewDbLogger(appLogger)
 	db, err := gorm.Open(postgres.Open(connection), &gorm.Config{
 		Logger: dbLogger,
@@ -45,7 +46,7 @@ func Connect(options *Options) (*gorm.DB, error) {
 	if err != nil {
 		return nil, errs.Wrap(err, "Failed to connect to database.")
 	}
-	db = db.Debug()
+
 	sqlDB, _ := db.DB()
 	if err = sqlDB.Ping(); err != nil {
 		_ = sqlDB.Close()
@@ -85,7 +86,7 @@ func Close(db *gorm.DB) {
 func NewDbLogger(l *zap.Logger) logger.Interface {
 	gormLogger := zapgorm2.New(l)
 	gormLogger.IgnoreRecordNotFoundError = true
-	gormLogger.LogLevel = gormlogger.Warn
+	gormLogger.LogLevel = gormlogger.Info
 	gormLogger.SetAsDefault()
 	return gormLogger
 }

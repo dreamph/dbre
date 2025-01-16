@@ -7,6 +7,7 @@ import (
 	"github.com/dreamph/dbre"
 	"github.com/dreamph/dbre/adapters/gorm/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type dbQuery[T any] struct {
@@ -160,6 +161,46 @@ func (q *dbQuery[T]) UpdateList(ctx context.Context, obj *[]T) (*[]T, error) {
 			return nil, utils.DbError(err)
 		}
 	}
+	return obj, nil
+}
+
+func (q *dbQuery[T]) Upsert(ctx context.Context, obj *T, specifyUpdateFields []string) (*T, error) {
+	_, err := q.UpsertList(ctx, &[]T{*obj}, specifyUpdateFields)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (q *dbQuery[T]) UpsertList(ctx context.Context, obj *[]T, specifyUpdateFields []string) (*[]T, error) {
+	pkFields, dataFields, err := utils.GetDbFields((*obj)[0])
+	if err != nil {
+		return nil, err
+	}
+
+	updateFields := specifyUpdateFields
+	if updateFields == nil {
+		updateFields = dataFields
+	}
+
+	var pkColumns []clause.Column
+	for _, pkField := range pkFields {
+		pkColumns = append(pkColumns, clause.Column{Name: pkField})
+	}
+
+	db := WithContext(ctx, q.DB)
+	db = q.DB.Clauses(
+		clause.OnConflict{
+			Columns:   pkColumns,
+			DoUpdates: clause.AssignmentColumns(updateFields),
+		},
+	)
+
+	db = db.Create(obj)
+	if err := db.Error; err != nil {
+		return nil, utils.DbError(err)
+	}
+
 	return obj, nil
 }
 

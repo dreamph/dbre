@@ -2,28 +2,31 @@ module github.com/dreamph/dbre/adapters/bun
 
 go 1.23
 
-
 replace github.com/dreamph/dbre => ../..
 
 require github.com/pkg/errors v0.9.1
 
 require (
-	github.com/dreamph/dbre v0.0.0-20250110043151-cb4a6b9ab013
+	github.com/dreamph/dbre v1.0.10
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/uptrace/bun v1.2.8
 	github.com/uptrace/bun/dialect/pgdialect v1.2.8
+	github.com/uptrace/bun/extra/bundebug v1.2.8
 	github.com/uptrace/bun/extra/bunotel v1.2.8
 	go.uber.org/zap v1.27.0
 )
 
 require (
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.4.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect

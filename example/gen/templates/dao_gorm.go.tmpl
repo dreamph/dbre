@@ -1,0 +1,26 @@
+package {{.daoPackageName}}
+
+import (
+    "context"
+    "time"
+
+	"{{.modelFQPN}}"
+
+    "github.com/guregu/null"
+    "github.com/satori/go.uuid"
+)
+
+var (
+    _ = time.Second
+    _ = null.Bool{}
+    _ = uuid.UUID{}
+)
+
+
+
+{{template "dao_gorm_getall.go.tmpl" .}}
+{{template "dao_gorm_get.go.tmpl" .}}
+{{template "dao_gorm_add.go.tmpl" .}}
+{{template "dao_gorm_update.go.tmpl" .}}
+{{template "dao_gorm_delete.go.tmpl" .}}
+

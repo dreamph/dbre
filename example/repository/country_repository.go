@@ -15,6 +15,7 @@ type CountryRepository interface {
 
 	Create(ctx context.Context, obj *domain.Country) (*domain.Country, error)
 	Update(ctx context.Context, obj *domain.Country) (*domain.Country, error)
+	Upsert(ctx context.Context, obj *domain.Country, specifyUpdateFields []string) (*domain.Country, error)
 	UpdateForce(ctx context.Context, obj *domain.Country) (*domain.Country, error)
 	Delete(ctx context.Context, id string) error
 	FindByID(ctx context.Context, id string) (*domain.Country, error)
@@ -45,16 +46,20 @@ func (r *countryRepository) Update(ctx context.Context, obj *domain.Country) (*d
 	return r.query.Update(ctx, obj)
 }
 
+func (r *countryRepository) Upsert(ctx context.Context, obj *domain.Country, specifyUpdateFields []string) (*domain.Country, error) {
+	return r.query.Upsert(ctx, obj, specifyUpdateFields)
+}
+
 func (r *countryRepository) UpdateForce(ctx context.Context, obj *domain.Country) (*domain.Country, error) {
 	return r.query.UpdateForce(ctx, obj)
 }
 
 func (r *countryRepository) Delete(ctx context.Context, id string) error {
-	return r.query.Delete(ctx, &domain.Country{ID: id})
+	return r.query.Delete(ctx, &domain.Country{Id: id})
 }
 
 func (r *countryRepository) FindByID(ctx context.Context, id string) (*domain.Country, error) {
-	return r.query.FindByPK(ctx, &domain.Country{ID: id})
+	return r.query.FindByPK(ctx, &domain.Country{Id: id})
 }
 
 func (r *countryRepository) FindOne(ctx context.Context, obj *domain.Country) (*domain.Country, error) {
@@ -78,14 +83,13 @@ func (r *countryRepository) List(ctx context.Context, obj *repomodels.CountryLis
 		sortSQL, err := dbre.SortSQL(&dbre.SortParam{
 			SortFieldMapping: map[string]string{
 				"id":     "id",
-				"nameEn": "name_en",
-				"nameTh": "name_th",
 				"code":   "code",
+				"name":   "name",
 				"status": "status",
 			},
 			Sort: obj.Sort,
 			DefaultSort: &dbre.Sort{
-				SortBy:        "nameEn",
+				SortBy:        "name",
 				SortDirection: dbre.DESC,
 			},
 		})

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -12,6 +14,7 @@ import (
 	"github.com/dreamph/dbre"
 	"github.com/iancoleman/strcase"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/schema"
 )
 
 const (
@@ -171,3 +174,112 @@ func IsSlice(value interface{}) bool {
 	typeOf := reflect.TypeOf(value)
 	return typeOf.Kind() == reflect.Slice
 }
+
+func GenerateSetExpressions(fields []string, pk []string, dbType string) ([]string, []string, error) {
+	var expressions []string
+
+	if len(pk) == 0 {
+		return nil, nil, fmt.Errorf("primary key fields are required")
+	}
+
+	for _, fieldName := range fields {
+		if slices.Contains(pk, fieldName) {
+			continue
+		}
+
+		expression, err := GenerateSetExpression(fieldName, dbType)
+		if err != nil {
+			return nil, nil, err
+		}
+		expressions = append(expressions, expression)
+	}
+
+	// Return the set expressions along with the provided primary key fields
+	return expressions, pk, nil
+}
+
+func GenerateSetExpression(fieldName, dbType string) (string, error) {
+	switch dbType {
+	case "pg": // PostgreSQL
+		return fmt.Sprintf("%s = EXCLUDED.%s", fieldName, fieldName), nil
+	case "mysql": // MySQL
+		return fmt.Sprintf("%s = VALUES(%s)", fieldName, fieldName), nil
+	case "mssql": // Microsoft SQL Server
+		return fmt.Sprintf("target.%s = source.%s", fieldName, fieldName), nil
+	case "sqlite": // SQLite
+		return fmt.Sprintf("%s = excluded.%s", fieldName, fieldName), nil
+	case "oracle": // Oracle
+		return fmt.Sprintf("target.%s = source.%s", fieldName, fieldName), nil
+	default:
+		return "", fmt.Errorf("unsupported database type: %s", dbType)
+	}
+}
+
+func GetDbFields(db bun.IDB, obj interface{}) ([]string, []string, error) {
+	tables := schema.NewTables(db.Dialect())
+	table := tables.Get(reflect.TypeOf(obj))
+	if table == nil {
+		return nil, nil, fmt.Errorf("table not found")
+	}
+
+	if len(table.PKs) == 0 {
+		return nil, nil, fmt.Errorf("no primary key found in struct")
+	}
+
+	if len(table.DataFields) == 0 {
+		return nil, nil, fmt.Errorf("no column found in struct")
+	}
+
+	var pkFields []string
+	var dataFields []string
+	for _, field := range table.Fields {
+		if field.IsPK {
+			pkFields = append(pkFields, field.Name)
+		} else {
+			dataFields = append(dataFields, field.Name)
+		}
+	}
+
+	return pkFields, dataFields, nil
+}
+
+/*func GetDbFields2(obj interface{}) ([]string, []string, error) {
+	val := reflect.ValueOf(obj)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return nil, nil, fmt.Errorf("expected a struct, got %s", val.Kind())
+	}
+
+	var pkFields []string
+	var dataFields []string
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Type().Field(i)
+		if field.Type == reflect.TypeOf(bun.BaseModel{}) {
+			continue
+		}
+
+		tag := field.Tag.Get("bun")
+		list := strings.Split(tag, ",")
+		dbName := GetArrayValueByIndex(list, 0)
+		if dbName == "" {
+			dbName = strcase.ToSnake(field.Name)
+		}
+		if strings.Contains(tag, "pk") {
+			pkFields = append(pkFields, dbName)
+		} else {
+			dataFields = append(dataFields, dbName)
+		}
+	}
+
+	if len(pkFields) == 0 {
+		return nil, nil, fmt.Errorf("no primary key found in struct")
+	}
+
+	if len(dataFields) == 0 {
+		return nil, nil, fmt.Errorf("no column found in struct")
+	}
+
+	return pkFields, dataFields, nil
+}*/

@@ -10,10 +10,10 @@ import (
 	"github.com/dreamph/dbre/adapters/gorm"
 	gormpg "github.com/dreamph/dbre/adapters/gorm/connectors/pg"
 	"github.com/dreamph/dbre/example/core/models"
-	"github.com/dreamph/dbre/example/domain/repomodels"
-
 	"github.com/dreamph/dbre/example/domain"
+	"github.com/dreamph/dbre/example/domain/repomodels"
 	"github.com/dreamph/dbre/example/repository"
+	guuid "github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -76,68 +76,57 @@ func main() {
 		}
 	}()
 
-	ctx := context.Background()
+	_ = dbTx
 
-	//Simple Usage
-	countryDbQuery := bun.New[domain.Country](appDB)
-	_, err = countryDbQuery.Create(ctx, &domain.Country{
-		Id:     "1",
-		Code:   "C1",
-		Name:   "Name",
-		Status: 20,
-	})
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
+	ctx := context.Background()
 
 	// Simple Usage with Repository
 	countryRepository := repository.NewCountryRepository(appDB)
 
 	_, err = countryRepository.Create(ctx, &domain.Country{
-		Id:     "12",
-		Code:   "C12",
-		Name:   "Name",
-		Status: 20,
+		Id:   guuid.New().String(),
+		Code: "C1",
+		Name: "Country 1",
 	})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	_, _, err = countryRepository.List(ctx, &repomodels.CountryListCriteria{
-		Limit: &models.PageLimit{
-			PageNumber: 1,
-			PageSize:   20,
-		},
+	list, _, err := countryRepository.List(ctx, &repomodels.CountryListCriteria{
+		Limit: &models.PageLimit{PageNumber: 1, PageSize: 20},
 	})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	// With Transaction
 	err = dbTx.WithTx(ctx, func(ctx context.Context, appDB dbre.AppIDB) error {
-		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			Id:     "13",
-			Code:   "C13",
-			Name:   "Name",
-			Status: 20,
-		})
-		if err != nil {
-			return err
+		for _, country := range *list {
+			country.Name = "1"
+			_, err := countryRepository.WithTx(appDB).Upsert(ctx, &country, nil) //[]string{"currency_symbol"}
+			if err != nil {
+				log.Fatalf(err.Error())
+
+			}
 		}
 
-		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			Id:     "21",
-			Code:   "C31",
-			Name:   "Name",
-			Status: 20,
+		_, _, err := countryRepository.List(ctx, &repomodels.CountryListCriteria{
+			Limit: &models.PageLimit{PageNumber: 1, PageSize: 20},
 		})
 		if err != nil {
-			return err
+			log.Fatalf(err.Error())
 		}
-
 		return nil
 	})
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
+
+	/*
+		// With Transaction
+		err = dbTx.WithTx(ctx, func(ctx context.Context, appDB dbre.AppIDB) error {
+
+			return nil
+		})
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+	*/
 }

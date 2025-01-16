@@ -2,6 +2,8 @@ package bun
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/dreamph/dbre"
 	"github.com/dreamph/dbre/adapters/bun/utils"
@@ -199,6 +201,61 @@ func (q *dbQuery[T]) UpdateList(ctx context.Context, obj *[]T) (*[]T, error) {
 	if err != nil {
 		return nil, utils.DbError(err)
 	}
+	return obj, nil
+}
+
+func (q *dbQuery[T]) Upsert(ctx context.Context, obj *T, specifyUpdateFields []string) (*T, error) {
+	_, err := q.UpsertList(ctx, &[]T{*obj}, specifyUpdateFields)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (q *dbQuery[T]) UpsertList(ctx context.Context, obj *[]T, specifyUpdateFields []string) (*[]T, error) {
+	pkFields, dataFields, err := utils.GetDbFields(q.DB, (*obj)[0])
+	if err != nil {
+		return nil, err
+	}
+
+	updateFields := specifyUpdateFields
+	if updateFields == nil {
+		updateFields = dataFields
+	}
+
+	dbType := q.DB.Dialect().Name().String()
+	setExpressions, idField, err := utils.GenerateSetExpressions(updateFields, pkFields, dbType)
+	if err != nil {
+		return nil, err
+	}
+
+	db := q.DB.NewInsert().Model(obj)
+	switch dbType {
+	case "pg":
+		db = db.
+			On(fmt.Sprintf("CONFLICT (%s) DO UPDATE", strings.Join(idField, ","))).
+			Set(strings.Join(setExpressions, ", "))
+	case "mysql":
+		db = db.
+			On("DUPLICATE KEY UPDATE").
+			Set(strings.Join(setExpressions, ", "))
+	case "mssql":
+		return nil, fmt.Errorf("upserts are not directly supported for MSSQL in Bun; use custom queries instead")
+	case "sqlite":
+		db = db.
+			On(fmt.Sprintf("CONFLICT (%s) DO UPDATE", strings.Join(idField, ","))).
+			Set(strings.Join(setExpressions, ", "))
+	case "oracle":
+		return nil, fmt.Errorf("upserts are not directly supported for Oracle in Bun; use custom queries instead")
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
+
+	_, err = db.Exec(ctx)
+	if err != nil {
+		return nil, utils.DbError(err)
+	}
+
 	return obj, nil
 }
 
