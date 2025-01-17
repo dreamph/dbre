@@ -23,8 +23,8 @@ func DbError(err error) error {
 	return err
 }
 
-func GetDbFields(obj interface{}) ([]string, []string, error) {
-	s, err := schema.Parse(obj, schemaCache, schema.NamingStrategy{})
+func GetDbFields(db *gorm.DB, obj interface{}) ([]string, []string, error) {
+	s, err := schema.Parse(obj, schemaCache, db.NamingStrategy)
 	if err != nil {
 		return nil, nil, err
 	}

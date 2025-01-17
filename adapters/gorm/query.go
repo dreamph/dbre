@@ -173,7 +173,7 @@ func (q *dbQuery[T]) Upsert(ctx context.Context, obj *T, specifyUpdateFields []s
 }
 
 func (q *dbQuery[T]) UpsertList(ctx context.Context, obj *[]T, specifyUpdateFields []string) (*[]T, error) {
-	pkFields, dataFields, err := utils.GetDbFields((*obj)[0])
+	pkFields, dataFields, err := utils.GetDbFields(q.DB, (*obj)[0])
 	if err != nil {
 		return nil, err
 	}

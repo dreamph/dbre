@@ -11,6 +11,7 @@ import (
 	gormpg "github.com/dreamph/dbre/adapters/gorm/connectors/pg"
 	"github.com/dreamph/dbre/example/core/models"
 	"github.com/dreamph/dbre/example/domain/repomodels"
+	"github.com/google/uuid"
 
 	"github.com/dreamph/dbre/example/domain"
 	"github.com/dreamph/dbre/example/repository"
@@ -78,10 +79,10 @@ func main() {
 
 	ctx := context.Background()
 
-	//Simple Usage
+	//Simple Usage directly without Repository
 	countryDbQuery := bun.New[domain.Country](appDB)
 	_, err = countryDbQuery.Create(ctx, &domain.Country{
-		Id:     "1",
+		Id:     uuid.New().String(),
 		Code:   "C1",
 		Name:   "Name",
 		Status: 20,
@@ -93,12 +94,29 @@ func main() {
 	// Simple Usage with Repository
 	countryRepository := repository.NewCountryRepository(appDB)
 
+	id := uuid.New().String()
 	_, err = countryRepository.Create(ctx, &domain.Country{
-		Id:     "12",
+		Id:     id,
 		Code:   "C12",
 		Name:   "Name",
 		Status: 20,
 	})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	data, err := countryRepository.FindByID(ctx, id)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	data.Name = "Name Updated"
+	_, err = countryRepository.Update(ctx, data)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	data.Name = "Name Updated2"
+	_, err = countryRepository.Upsert(ctx, data, []string{"name"})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -116,7 +134,7 @@ func main() {
 	// With Transaction
 	err = dbTx.WithTx(ctx, func(ctx context.Context, appDB dbre.AppIDB) error {
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			Id:     "13",
+			Id:     uuid.New().String(),
 			Code:   "C13",
 			Name:   "Name",
 			Status: 20,
@@ -126,7 +144,7 @@ func main() {
 		}
 
 		_, err = countryRepository.WithTx(appDB).Create(ctx, &domain.Country{
-			Id:     "21",
+			Id:     uuid.New().String(),
 			Code:   "C31",
 			Name:   "Name",
 			Status: 20,

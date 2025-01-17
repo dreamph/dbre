@@ -14,7 +14,6 @@ import (
 	"github.com/dreamph/dbre"
 	"github.com/iancoleman/strcase"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/schema"
 )
 
 const (
@@ -216,7 +215,7 @@ func GenerateSetExpression(fieldName, dbType string) (string, error) {
 }
 
 func GetDbFields(db bun.IDB, obj interface{}) ([]string, []string, error) {
-	tables := schema.NewTables(db.Dialect())
+	tables := db.Dialect().Tables()
 	table := tables.Get(reflect.TypeOf(obj))
 	if table == nil {
 		return nil, nil, fmt.Errorf("table not found")
